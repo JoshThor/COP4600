@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#define MAX 100
+#define MAX 128
 
 //Different states
 enum state {READY, NOT_READY, RUNNING, IDLE};
@@ -10,6 +10,8 @@ enum state {READY, NOT_READY, RUNNING, IDLE};
 //Structure of a process
 typedef struct process {
     int time_arrived;
+    int time_finished;
+    int wait;
     char process_id[256];
     int burst;
     enum state curr_state;
@@ -18,16 +20,15 @@ typedef struct process {
 //Defined functions
 void roundRobin(process * processes, int quantum, int processcount, int runfor);
 char *findValue(char * line, char * name, char * sub);
-process deQueue();
-void insert();
+int deQueue();
+void insert(int data);
 int size();
 bool isFull();
 bool isEmpty();
-process peek();
 
 
 //Variable init.
-process queue[MAX];
+int queue[MAX];
 int front = 0;
 int rear = -1;
 int itemCount = 0;
@@ -108,6 +109,8 @@ void main(void)
         processes[i].time_arrived = atoi(findValue(line, "arrival", strstr(line, "arrival")));
         processes[i].burst = atoi(findValue(line, "burst", strstr(line, "burst")));
         processes[i].curr_state = NOT_READY;
+        processes[i].time_finished = -1;
+        processes[i].wait = 0;
 
     }
     //close input file
@@ -174,8 +177,8 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
     //counts the number of active processes
     int active_procsses = 0;
 
-    //holds the current process
-    process curr;
+    //holds the current process num
+    int curr_process;
 
     //Stores the state of the CPU
     enum state cpu;
@@ -197,7 +200,7 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
                     processes[j].curr_state = READY;
 
                     //enqueueing the process
-                    insert(processes[j]);
+                    insert(j);
                     active_procsses++;
                 }
 
@@ -209,20 +212,28 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
         if(cpu == RUNNING)
         {
             //adjust the boost
-            curr.burst -= 1;
+            processes[curr_process].burst -= 1;
+            int k;
+            for(k = 0; k < processcount; k++)
+            {
+                if(k != curr_process && processes[k].time_arrived < (i-1))
+                    processes[k].wait++;
+            }
 
             //if the process has finished, output the information
-            if(curr.burst == 0)
+            if(processes[curr_process].burst == 0)
             {
-                fprintf(ofp, "Time %d: %s finished\n", i, curr.process_id);
-                curr.curr_state = NOT_READY;
+                fprintf(ofp, "Time %d: %s finished\n", i, processes[curr_process].process_id);
+                processes[curr_process].time_finished = i;
+                processes[curr_process].curr_state = NOT_READY;
                 cpu = IDLE;
             }
             //for Round-robin process can only run for a specified amount of time, this checks if that time has been reached
             else if ( i % quantum == 0)
             {
+                //processes[curr_process].wait++;
                 //Enqueues the current process
-                insert(curr);
+                insert(curr_process);
 
                 //sets cpu to idle
                 cpu = IDLE;
@@ -233,9 +244,9 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
         //if so dequeue the process and run it
         if(!isEmpty() && (cpu == IDLE))
         {
-            curr = deQueue();
-            fprintf(ofp, "Time %d: %s selected (burst %d)\n", i, curr.process_id, curr.burst);
-            curr.curr_state = NOT_READY;
+            curr_process = deQueue();
+            fprintf(ofp, "Time %d: %s selected (burst %d)\n", i, processes[curr_process].process_id, processes[curr_process].burst);
+            processes[curr_process].curr_state = NOT_READY;
             cpu = RUNNING;
         }else if (i % quantum == 0){
             fprintf(ofp,"Time %d: Idle\n", i);
@@ -243,16 +254,19 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
         }
 
     }
-    fprintf(ofp, "Finished at time %d\n", runfor);
+    fprintf(ofp, "Finished at time %d\n\n", runfor);
+
+    for(i = 0; i < processcount; i++)
+    {
+        fprintf(ofp, "%s wait %d turnaround %d\n", processes[i].process_id, processes[i].wait, (processes[i].time_finished - processes[i].time_arrived));
+
+    }
     fclose(ofp);
 }
 
 
 //Queue functions below
 //-----------------------//
-process peek() {
-   return queue[front];
-}
 
 bool isEmpty() {
    return itemCount == 0;
@@ -266,7 +280,7 @@ int size() {
    return itemCount;
 }
 
-void insert(process data) {
+void insert(int data) {
 
    if(!isFull()) {
 
@@ -279,8 +293,8 @@ void insert(process data) {
    }
 }
 
-process deQueue() {
-   process data = queue[front++];
+int deQueue() {
+   int data = queue[front++];
 
    if(front == MAX) {
       front = 0;

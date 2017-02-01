@@ -16,3 +16,6 @@ Time 13: P2 selected (burst 1)
 Time 14: P2 finished
 Time 14: Idle
 Finished at time 15
+
+P1 wait 5 turnaround 10
+P2 wait 5 turnaround 14
