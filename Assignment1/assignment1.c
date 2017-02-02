@@ -213,6 +213,8 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
         {
             //adjust the boost
             processes[curr_process].burst -= 1;
+
+            //calculates the wait time of the other processes
             int k;
             for(k = 0; k < processcount; k++)
             {
