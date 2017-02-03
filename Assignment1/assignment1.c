@@ -260,7 +260,10 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
 
     for(i = 0; i < processcount; i++)
     {
-        fprintf(ofp, "%s wait %d turnaround %d\n", processes[i].process_id, processes[i].wait, (processes[i].time_finished - processes[i].time_arrived));
+        if(processes[i].time_finished != -1)
+            fprintf(ofp, "%s wait %d turnaround %d\n", processes[i].process_id, processes[i].wait, (processes[i].time_finished - processes[i].time_arrived));
+        else
+            fprintf(ofp, "%s wait %d process did not finish\n", processes[i].process_id, processes[i].wait);
 
     }
     fclose(ofp);
