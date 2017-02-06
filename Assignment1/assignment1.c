@@ -5,7 +5,7 @@
 #define MAX 128
 
 //Different states
-enum state {READY, NOT_READY, RUNNING, IDLE};
+enum state {READY, NOT_READY, FINISHED, RUNNING, IDLE};
 
 //Structure of a process
 typedef struct process {
@@ -218,7 +218,8 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
             int k;
             for(k = 0; k < processcount; k++)
             {
-                if(k != curr_process && processes[k].time_arrived < (i-1))
+                //Change the (i-1) to i
+                if(k != curr_process && processes[k].time_arrived < (i-1) && processes[k].curr_state != FINISHED)
                     processes[k].wait++;
             }
 
@@ -227,7 +228,7 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
             {
                 fprintf(ofp, "Time %d: %s finished\n", i, processes[curr_process].process_id);
                 processes[curr_process].time_finished = i;
-                processes[curr_process].curr_state = NOT_READY;
+                processes[curr_process].curr_state = FINISHED;
                 cpu = IDLE;
             }
             //for Round-robin process can only run for a specified amount of time, this checks if that time has been reached
