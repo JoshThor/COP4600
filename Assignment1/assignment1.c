@@ -26,13 +26,13 @@ int size();
 bool isFull();
 bool isEmpty();
 
-
 //Variable init.
 int queue[MAX];
 int front = 0;
 int rear = -1;
 int itemCount = 0;
 
+const char * outputFile = "processes.out";
 
 void main(void)
 {
@@ -45,6 +45,7 @@ void main(void)
     FILE *ifp;
 
     ifp = fopen(filename, "r");
+
     if(ifp == NULL)
     {
         printf("Error finding file.\n");
@@ -53,10 +54,6 @@ void main(void)
 
     while(fgets(line, sizeof line, ifp) != NULL)
     {
-        //Prints input
-        fputs(line, stdout);
-
-
         //first remove comment in the line
         char *comment = strchr(line, '#');
         if(comment)
@@ -81,15 +78,16 @@ void main(void)
             //Finds the use mode
             strcpy(use_mode, findValue(line, "use", sub));
 
-            if(strcmp(use_mode, "rr") != 0)
-                break;
-
         }
         else if((sub = strstr(line, "quantum")) != NULL)
         {
 
-            //if use moude = rr then this block find the quantum
+            //if use moude = rr then find the quantum
             quantum = atoi(findValue(line, "quantum", sub));
+        }
+        else if((sub = strstr(line, "process name")) != NULL)
+        {
+            //Breaks the while loop when it reaches the first process
             break;
         }
 
@@ -103,7 +101,6 @@ void main(void)
     //Get each process and its required information
     for(i = 0; i <processcount; i++ )
     {
-        fgets(line, sizeof line, ifp);
 
         strcpy(processes[i].process_id, findValue(line, "name", strstr(line, "name")));
         processes[i].time_arrived = atoi(findValue(line, "arrival", strstr(line, "arrival")));
@@ -112,7 +109,10 @@ void main(void)
         processes[i].time_finished = -1;
         processes[i].wait = 0;
 
+        fgets(line, sizeof line, ifp);
+
     }
+
     //close input file
     fclose(ifp);
 
@@ -124,16 +124,18 @@ void main(void)
         roundRobin(processes, quantum, processcount, runfor);
         break;
     case 'f':
+        printf("Test fcfs\n");
         //run the fcfs scheduler
         break;
     case 's':
+        printf("Test sjf\n");
         //run the sjf scheduler
         break;
     default:
         break;
     }
 
-    printf("\nRan processes successfully!\n");
+    printf("\nRan the %s algorithm!\n", &use_mode);
 }
 
 //Finds the value associated with the given word
@@ -166,8 +168,7 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
     int i;
     FILE *ofp;
 
-
-    ofp = fopen("processes.out", "w");
+    ofp = fopen(outputFile, "w");
 
     //prints the header to the output file
     fprintf(ofp, "%d processes\n", processcount);
@@ -219,7 +220,7 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
             for(k = 0; k < processcount; k++)
             {
                 //Change the (i-1) to i
-                if(k != curr_process && processes[k].time_arrived < (i-1) && processes[k].curr_state != FINISHED)
+                if(k != curr_process && processes[k].time_arrived < i && processes[k].curr_state != FINISHED)
                     processes[k].wait++;
             }
 
@@ -253,7 +254,6 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
             cpu = RUNNING;
         }else if (i % quantum == 0){
             fprintf(ofp,"Time %d: Idle\n", i);
-            continue;
         }
 
     }
