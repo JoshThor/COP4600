@@ -12,7 +12,7 @@ typedef struct process {
     int time_arrived;
     int time_finished;
     int wait;
-    char process_id[256];
+    char process_id[MAX];
     int burst;
     enum state curr_state;
 }process;
