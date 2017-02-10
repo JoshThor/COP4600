@@ -186,7 +186,7 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
     enum state cpu;
     cpu = IDLE;
 
-    for(i = 0; i < runfor; i++)
+    for(i = 0; i <= runfor; i++)
     {
 
         //checks if there are still processes to arrive
@@ -232,6 +232,7 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
                 processes[curr_process].time_finished = i;
                 processes[curr_process].curr_state = FINISHED;
                 cpu = IDLE;
+
             }
             //for Round-robin process can only run for a specified amount of time, this checks if that time has been reached
             else if ( i % quantum == 0)
@@ -243,7 +244,15 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
                 //sets cpu to idle
                 cpu = IDLE;
             }
+
         }
+
+        //Break before trying to run another process
+        if(i == runfor)
+        {
+            break;
+        }
+
 
         //checks if the queue is empty and the cpu is idle
         //if so dequeue the process and run it
@@ -292,7 +301,7 @@ void firstComeFirstServed(process * processes, int processcount, int runfor)
     enum state cpu;
     cpu = IDLE;
 
-    for(i=0; i<runfor; i++) {
+    for(i=0; i<=runfor; i++) {
 
         //checks if there are still processes to arrive
         if((active_procsses != processcount))
@@ -338,6 +347,13 @@ void firstComeFirstServed(process * processes, int processcount, int runfor)
                 processes[curr_process].curr_state = FINISHED;
                 cpu = IDLE;
             }
+
+        }
+
+        //Break before trying to run another process
+        if(i == runfor)
+        {
+            break;
         }
 
         // if !isEmpty() && spu == IDLE
