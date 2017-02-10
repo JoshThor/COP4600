@@ -37,7 +37,7 @@ const char * outputFile = "processes.out";
 
 void main(void)
 {
-    char filename[20] = "input.in";
+    char filename[20] = "input2.in";
     char use_mode[5];
     char line[256];
 
@@ -350,7 +350,7 @@ void firstComeFirstServed(process * processes, int processcount, int runfor)
         }
         else if (processes[curr_process].burst > 0 && cpu == RUNNING)
         {
-            fprintf(ofp, "Time %d: %s selected (burst %d)\n", i, processes[curr_process].process_id, processes[curr_process].burst);
+            //fprintf(ofp, "Time %d: %s selected (burst %d)\n", i, processes[curr_process].process_id, processes[curr_process].burst);
         }
         else
         {
