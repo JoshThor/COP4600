@@ -40,7 +40,7 @@ const char * outputFile = "processes.out";
 
 void main(void)
 {
-    char filename[20] = "input3.in";
+    char filename[20] = "input.in";
     char use_mode[5];
     char line[256];
 
