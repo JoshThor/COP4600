@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <limits.h>
+
 #define MAX 128
 
 //Different states
@@ -20,6 +22,7 @@ typedef struct process {
 //Defined functions
 void roundRobin(process * processes, int quantum, int processcount, int runfor);
 void firstComeFirstServed(process * processes, int processcount, int runfor);
+void shortestJobFirst(process * processes, int processcount, int runfor);
 char *findValue(char * line, char * name, char * sub);
 int deQueue();
 void insert(int data);
@@ -37,7 +40,7 @@ const char * outputFile = "processes.out";
 
 void main(void)
 {
-    char filename[20] = "input2.in";
+    char filename[20] = "input3.in";
     char use_mode[5];
     char line[256];
 
@@ -129,8 +132,8 @@ void main(void)
         firstComeFirstServed(processes, processcount, runfor);
         break;
     case 's':
-        printf("Test sjf\n");
         //run the sjf scheduler
+        shortestJobFirst(processes, processcount, runfor);
         break;
     default:
         break;
@@ -163,7 +166,10 @@ char * findValue(char *line, char *name, char *sub)
     return num;
 }
 
+
+
 //Round Robin Scheduler algorithm
+
 void roundRobin(process * processes, int quantum, int processcount, int runfor)
 {
     int i;
@@ -263,7 +269,7 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
             processes[curr_process].curr_state = NOT_READY;
             cpu = RUNNING;
         }else if (i % quantum == 0){
-            fprintf(ofp,"Time %d: Idle\n", i);
+            fprintf(ofp,"Time %d: IDLE\n", i);
         }
 
     }
@@ -279,6 +285,10 @@ void roundRobin(process * processes, int quantum, int processcount, int runfor)
     }
     fclose(ofp);
 }
+
+
+
+//First come first served
 
 void firstComeFirstServed(process * processes, int processcount, int runfor)
 {
@@ -370,7 +380,7 @@ void firstComeFirstServed(process * processes, int processcount, int runfor)
         }
         else
         {
-            fprintf(ofp,"Time %d: Idle\n", i);
+            fprintf(ofp,"Time %d: IDLE\n", i);
         }
     }
 
@@ -385,6 +395,133 @@ void firstComeFirstServed(process * processes, int processcount, int runfor)
 
     }
     fclose(ofp);
+}
+
+
+
+//Shortest Job First
+
+void shortestJobFirst(process * processes, int processcount, int runfor) {
+
+    int i;
+    FILE *ofp;
+
+    ofp = fopen(outputFile, "w");
+
+    //prints the header to the output file
+    fprintf(ofp, "%d processes\n", processcount);
+    fprintf(ofp, "Using Shortest Job First (Pre)\n\n");
+
+    //counts the number of active processes
+    int active_procsses = 0;
+
+    //holds the current process num
+    int curr_process;
+
+    //Stores the state of the CPU
+    enum state cpu;
+    cpu = IDLE;
+
+    for(i = 0; i <= runfor; i++)
+    {
+
+        //checks if there are still processes to arrive
+        if((active_procsses != processcount))
+        {
+            int j;
+            for(j = 0; j < processcount; j++)
+            {
+                
+                //finds the correct process arriving at time i
+                if(processes[j].time_arrived == i)
+                {
+                    fprintf(ofp,"Time %d: %s arrived\n", i, &processes[j].process_id);
+                    active_procsses++;
+                }
+
+            }
+        }
+
+        //if there is a process currently running
+        if(cpu == RUNNING)
+        {
+            //adjust the boost
+            processes[curr_process].burst -= 1;
+
+            //calculates the wait time of the other processes
+            int k;
+            for(k = 0; k < processcount; k++)
+            {
+                //Change the (i-1) to i
+                if(k != curr_process && processes[k].time_arrived < i && processes[k].curr_state != FINISHED)
+                    processes[k].wait++;
+            }
+
+            //if the process has finished, output the information
+            if(processes[curr_process].burst == 0)
+            {
+                fprintf(ofp, "Time %d: %s finished\n", i, processes[curr_process].process_id);
+                processes[curr_process].time_finished = i;
+                processes[curr_process].curr_state = FINISHED;
+                cpu = IDLE;
+            }
+
+        }
+
+        //Break before trying to run another process
+        if(i == runfor)
+        {
+            break;
+        }
+
+        //Try to select the shortest process available
+        int minBurst = INT_MAX;
+        int minID = -1;
+        int j;
+        for(j = 0; j < processcount; j++)
+        {
+            //Find process that has arived
+            if(processes[j].time_arrived <= i)
+            {
+                if (processes[j].curr_state != FINISHED)
+                {
+                    if (processes[j].burst < minBurst)
+                    {
+                        minID = j;
+                        minBurst = processes[j].burst;
+                    }
+                }
+            }
+
+        }
+        
+        //process was found and is different than current process (or no current process found)
+        if (minID != -1 && minID!=curr_process)
+        {
+            curr_process = minID;
+            fprintf(ofp, "Time %d: %s selected (burst %d)\n", i, processes[curr_process].process_id, processes[curr_process].burst);
+            cpu = RUNNING;
+        }
+        
+        if (cpu == IDLE) {
+            fprintf(ofp,"Time %d: IDLE\n", i);
+        }
+
+    }
+    
+    fprintf(ofp, "Finished at time %d\n\n", runfor);
+
+    for(i = 0; i < processcount; i++)
+    {
+        if(processes[i].time_finished != -1)
+            fprintf(ofp, "%s wait %d turnaround %d\n", processes[i].process_id, processes[i].wait, (processes[i].time_finished - processes[i].time_arrived));
+        else
+            fprintf(ofp, "%s wait %d process did not finish\n", processes[i].process_id, processes[i].wait);
+
+    }
+    fclose(ofp);
+
+
 }
 
 
