@@ -299,7 +299,7 @@ void firstComeFirstServed(process * processes, int processcount, int runfor)
 
     //prints the header to the output file
     fprintf(ofp, "%d processes\n", processcount);
-    fprintf(ofp, "Using First-Come First-Served\n");
+    fprintf(ofp, "Using First Come First Served\n\n");
 
     //counts the number of active processes
     int active_procsses = 0;
@@ -436,6 +436,7 @@ void shortestJobFirst(process * processes, int processcount, int runfor) {
                 if(processes[j].time_arrived == i)
                 {
                     fprintf(ofp,"Time %d: %s arrived\n", i, &processes[j].process_id);
+                    processes[j].curr_state = READY;
                     active_procsses++;
                 }
 
@@ -495,12 +496,20 @@ void shortestJobFirst(process * processes, int processcount, int runfor) {
 
         }
         
-        //process was found and is different than current process (or no current process found)
-        if (minID != -1 && minID!=curr_process)
+        //process was found and is different than current process running (or no current process found)
+        if (minID != -1)
         {
-            curr_process = minID;
-            fprintf(ofp, "Time %d: %s selected (burst %d)\n", i, processes[curr_process].process_id, processes[curr_process].burst);
-            cpu = RUNNING;
+            if (processes[minID].curr_state == READY)
+            {
+                if (processes[curr_process].curr_state == RUNNING)
+                {
+                    processes[curr_process].curr_state = READY;
+                }
+                curr_process = minID;
+                processes[curr_process].curr_state = RUNNING;
+                fprintf(ofp, "Time %d: %s selected (burst %d)\n", i, processes[curr_process].process_id, processes[curr_process].burst);
+                cpu = RUNNING;
+            }
         }
         
         if (cpu == IDLE) {
