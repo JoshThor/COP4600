@@ -1,0 +1,5 @@
+http://www.tldp.org/LDP/lkmpg/2.6/html/x892.html
+
+http://www.tldp.org/LDP/lkmpg/2.6/html/x569.html
+
+https://appusajeev.wordpress.com/2011/06/18/writing-a-linux-character-device-driver/
