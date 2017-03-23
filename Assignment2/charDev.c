@@ -5,7 +5,7 @@
 #include <linux/uaccess.h>
 
 #define DEVICE_NAME "charDev"
-#define BUFF_LEN 1000
+#define BUF_LEN 1000
 
 //Modules
 
@@ -14,9 +14,9 @@ MODULE_DESCRIPTION("Character Device Driver");
 MODULE_AUTHOR("Group 50");
 
 static char msg[BUFF_LEN];
-static short readIndex = 0;
+static char *Message_Ptr;
 static int count = 0;
-int major = -1;
+int Major = -1;
 
 //Function declaration
 static int dev_open(struct inode *, struct file *);
@@ -38,21 +38,28 @@ static struct file_operations fops =
 //Initialize driver and get a major number
 int init_module(void)
 {
-    major = register_chrdev(0, DEVICE_NAME, &fops); //register device & get back a major device number
+    Major = register_chrdev(0, DEVICE_NAME, &fops); //register device & get back a major device number
 
-    if( major < 0)
-        printk(KERN_ALERT "Device registration failed.. \n");
-    else
-        printk(KERN_INFO "Device registered with major number: %d\n", major);
+	if (Major < 0) {
+	  printk(KERN_ALERT "Registering char device failed with %d\n", Major);
+	  return Major;
+	}
 
-    return major;
+	printk(KERN_INFO "I was assigned major number %d\n", Major);
+	printk(KERN_INFO "Command to create device file: 'mknod /dev/%s c %d 0'.\n", DEVICE_NAME, Major);
+
+    return 0;
 }
 
 //Unload driver
 void cleanup_module(void)
 {
-
-    unregister_chrdev(major, DEVICE_NAME);
+	/*
+	 * Unregister the device
+	 */
+	int ret = unregister_chrdev(Major, DEVICE_NAME);
+	if (ret < 0)
+		printk(KERN_ALERT "Error in unregister_chrdev: %d\n", ret);
 }
 
 //called when opening the device driver
@@ -64,36 +71,38 @@ static int dev_open(struct inode *inod, struct file * fp)
 }
 
 //Called when making a read request to the driver
-static ssize_t dev_read(struct file *fp, char *buff, size_t length, loff_t *off)
+static ssize_t dev_read(struct file *fp, char *buffer, size_t length, loff_t *offset)
 {
 
     short bytes = 0;
 
-    while(length && (readIndex != 0 ))
-    {
-        put_user(msg[readIndex], buff++);
-        bytes++;
-        length--;
-        readIndex--;
-    }
+    if (*Message_Ptr == 0)
+		return 0;
 
-    return bytes;
+    //puts data into the buffer
+	while (length && *Message_Ptr) {
+
+		put_user(*(Message_Ptr++), buffer++);
+		length--;
+		bytes_read++;
+	}
+
+
+	return bytes_read;
 }
 
 //Called when making a write request to the driver
 static ssize_t dev_write(struct file *fp, const char *buff, size_t length, loff_t *off)
 {
-    short index = length-1;
-    short bytes = 0;
+    int i;
 
-    while(readIndex < BUFF_LEN && length > 0)
-    {
-        msg[bytes++] = buff[index--];
-        length--;
-        readIndex++;
-    }
+    //gets data from user input
+	for (i = 0; i < length && i < BUF_LEN; i++)
+		get_user(Message[i], buffer + i);
 
-    return bytes;
+	Message_Ptr = Message;
+
+	return i;
 }
 
 //Called when closing the device driver
