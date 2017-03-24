@@ -89,7 +89,7 @@ static ssize_t dev_read(struct file *fp, char *buffer, size_t length, loff_t *of
 }
 
 //Called when making a write request to the driver
-static ssize_t dev_write(struct file *fp, const char *buff, size_t length, loff_t *off)
+static ssize_t dev_write(struct file *fp, const char *buffer, size_t length, loff_t *off)
 {
     int i;
 
