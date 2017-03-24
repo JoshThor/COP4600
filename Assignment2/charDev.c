@@ -13,7 +13,7 @@ MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Character Device Driver");
 MODULE_AUTHOR("Group 50");
 
-static char msg[BUFF_LEN];
+static char Message[BUF_LEN];
 static char *Message_Ptr;
 static int count = 0;
 int Major = -1;
@@ -57,9 +57,7 @@ void cleanup_module(void)
 	/*
 	 * Unregister the device
 	 */
-	int ret = unregister_chrdev(Major, DEVICE_NAME);
-	if (ret < 0)
-		printk(KERN_ALERT "Error in unregister_chrdev: %d\n", ret);
+	unregister_chrdev(Major, DEVICE_NAME);
 }
 
 //called when opening the device driver
@@ -74,7 +72,7 @@ static int dev_open(struct inode *inod, struct file * fp)
 static ssize_t dev_read(struct file *fp, char *buffer, size_t length, loff_t *offset)
 {
 
-    short bytes = 0;
+    short bytes_read = 0;
 
     if (*Message_Ptr == 0)
 		return 0;
@@ -86,7 +84,6 @@ static ssize_t dev_read(struct file *fp, char *buffer, size_t length, loff_t *of
 		length--;
 		bytes_read++;
 	}
-
 
 	return bytes_read;
 }
