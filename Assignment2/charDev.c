@@ -5,7 +5,7 @@
 #include <linux/uaccess.h>
 
 #define DEVICE_NAME "charDev"
-#define BUF_LEN 1000
+#define BUF_LEN 1024
 
 //Modules
 
