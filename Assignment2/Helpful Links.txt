@@ -3,3 +3,23 @@ http://www.tldp.org/LDP/lkmpg/2.6/html/x892.html
 http://www.tldp.org/LDP/lkmpg/2.6/html/x569.html
 
 https://appusajeev.wordpress.com/2011/06/18/writing-a-linux-character-device-driver/
+
+____________________
+
+Commands:
+
+(Build kernal module)
+make
+
+(Install device)
+sudo insmod charDev.ko
+
+(Create device file)
+sudo mknod /dev/charDev c 247 0
+sudo chmod a+r+w /dev/charDev
+
+(Write to device)
+ echo “hello” >/dev/charDev
+
+(Read from device)
+cat /dev/charDev

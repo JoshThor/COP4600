@@ -17,6 +17,7 @@ static char Message[BUF_LEN];
 static char *Message_Ptr;
 static int count = 0;
 int Major = -1;
+int Byte_Count = 0;
 
 //Function declaration
 static int dev_open(struct inode *, struct file *);
@@ -71,18 +72,23 @@ static int dev_open(struct inode *inod, struct file * fp)
 //Called when making a read request to the driver
 static ssize_t dev_read(struct file *fp, char *buffer, size_t length, loff_t *offset)
 {
+	short bytes_read = 0;
+	
+	printk(KERN_INFO "Attempting to read from device file...\n");
 
-    short bytes_read = 0;
+	if (Byte_Count == 0)
+		return 0;
 
-    if (*Message_Ptr == 0)
+    	if (*Message_Ptr == 0)
 		return 0;
 
     //puts data into the buffer
-	while (length && *Message_Ptr) {
+	while (length && *Message_Ptr && (Byte_Count > 0)) {
 
 		put_user(*(Message_Ptr++), buffer++);
 		length--;
 		bytes_read++;
+		Byte_Count--;
 	}
 
 	return bytes_read;
@@ -91,15 +97,21 @@ static ssize_t dev_read(struct file *fp, char *buffer, size_t length, loff_t *of
 //Called when making a write request to the driver
 static ssize_t dev_write(struct file *fp, const char *buffer, size_t length, loff_t *off)
 {
-    int i;
+    int i = 0;
+	
+	printk(KERN_INFO "Attempting to write to device file...\n");
 
-    //gets data from user input
-	for (i = 0; i < length && i < BUF_LEN; i++)
-		get_user(Message[i], buffer + i);
+	while (i < length && Byte_Count < BUF_LEN)
+	{
+		get_user(Message[Byte_Count], buffer + i);
+		Byte_Count++;
+		i++;
+	}
 
 	Message_Ptr = Message;
 
 	return i;
+	
 }
 
 //Called when closing the device driver
